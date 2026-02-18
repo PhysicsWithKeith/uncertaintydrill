@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Uncertainty Propagation Drill | Physics with Keith</title>
+<style>
+/* =====================================================
+   DESIGN SYSTEM: Dark space + neon colours for physics
+   Trebuchet MS (fun, clear, system font - no deps)
+   ===================================================== */
+:root {
+  --bg:      #eef2f7;
+  --card:    #ffffff;
+  --card2:   #f8fafc;
+  --cyan:    #0891b2;
+  --pink:    #db2777;
+  --amber:   #b45309;
+  --green:   #16a34a;
+  --red:     #dc2626;
+  --purple:  #7c3aed;
+  --text:    #1e293b;
+  --muted:   #64748b;
+  --border:  #94a3b8;
+  --r:       8px;
+  --font:    'Trebuchet MS', Geneva, Tahoma, sans-serif;
+  --mono:    'Lucida Console', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  height: 100vh;
+  overflow: hidden;
+  background-image:
+    radial-gradient(ellipse at 15% 40%, rgba(8,145,178,.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(219,39,119,.05) 0%, transparent 55%);
+}
+
+/* ── Screens ── */
+.screen { display:none; position:absolute; inset:0; }
+.screen.active { display:flex; flex-direction:column; }
+
+/* ======================== INTRO SCREEN ======================== */
+#screen-intro {
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  padding:24px;
+  text-align:center;
+}
+.intro-logo {
+  font-size:3em;
+  font-weight:900;
+  background: linear-gradient(135deg, var(--cyan) 30%, var(--pink) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1.1;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.intro-sub { color:var(--amber); font-size:1.1em; letter-spacing:1px; }
+.rules-box {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px 24px;
+  max-width:780px;
+  text-align:left;
+  line-height:1.7;
+  font-size:.92em;
+  color:var(--muted);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.rules-box h3 { color:var(--cyan); margin-bottom:8px; font-size:1.05em; }
+.rules-box .rule { margin:4px 0; }
+.rules-box .rule b { color:var(--text); }
+.btn {
+  padding:12px 36px;
+  border:none;
+  border-radius:var(--r);
+  font-family:var(--font);
+  font-size:1.05em;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .18s;
+  letter-spacing:.5px;
+}
+.btn-primary {
+  background:linear-gradient(135deg, var(--cyan), #0369a1);
+  color:#fff;
+  box-shadow:0 0 18px rgba(8,145,178,.25);
+}
+.btn-primary:hover { transform:scale(1.04); box-shadow:0 0 26px rgba(8,145,178,.4); }
+.btn-warn {
+  background:linear-gradient(135deg,#dc2626,#9f1239);
+  color:#fff;
+  font-size:.82em;
+  padding:8px 16px;
+}
+.btn-warn:hover { transform:scale(1.04); }
+.btn-cheat {
+  background:linear-gradient(135deg,var(--purple),#6d28d9);
+  color:#fff;
+  font-size:.82em;
+  padding:8px 16px;
+}
+.btn-cheat:hover { transform:scale(1.04); }
+.btn-next {
+  background:linear-gradient(135deg,var(--green),#15803d);
+  color:#fff;
+  font-size:.88em;
+  padding:9px 20px;
+}
+.btn-next:hover { transform:scale(1.04); }
+.btn-submit {
+  background:linear-gradient(135deg,var(--amber),#d97706);
+  color:#000;
+  font-size:.88em;
+  padding:9px 20px;
+  font-weight:800;
+}
+.btn-submit:hover { transform:scale(1.04); }
+.btn-again {
+  background:linear-gradient(135deg,var(--pink),#be185d);
+  color:#fff;
+  font-size:1.1em;
+  padding:14px 42px;
+}
+.btn-again:hover { transform:scale(1.04); box-shadow:0 0 22px rgba(244,114,182,.5); }
+
+/* ======================== GAME SCREEN ======================== */
+#screen-game {
+  padding:10px 14px 8px;
+  gap:6px;
+}
+
+/* Header: title + timer */
+.game-header {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-shrink:0;
+}
+.game-title {
+  font-size:1.1em;
+  font-weight:700;
+  background:linear-gradient(90deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  flex:1;
+}
+.timer-wrap {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:5px 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.timer-label { font-size:.75em; color:var(--muted); }
+#timer-display {
+  font-family:var(--mono);
+  font-size:1.2em;
+  color:var(--amber);
+  font-weight:700;
+  min-width:50px;
+}
+#timer-display.urgent { color:var(--red); animation:pulse .8s infinite alternate; }
+@keyframes pulse { to { opacity:.5; } }
+
+/* Score tally in header */
+.score-wrap {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:5px 10px;
+  font-size:.78em;
+  color:var(--muted);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.score-wrap span { color:var(--green); font-weight:700; font-size:1.1em; }
+
+/* Equation display */
+.equation-bar {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:7px 14px;
+  text-align:center;
+  flex-shrink:0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.equation-bar .eq-label { font-size:.72em; color:var(--muted); }
+.equation-bar .eq-formula {
+  font-size:1.15em;
+  color:var(--cyan);
+  font-weight:700;
+  letter-spacing:.5px;
+}
+.equation-bar .eq-formula sup { font-size:.7em; }
+
+/* Data + inputs table */
+.data-section {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:6px 10px;
+  flex-shrink:0;
+  overflow:visible;
+  width:100%;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.data-grid {
+  display:grid;
+  grid-template-columns: 38px repeat(4, 1fr);
+  gap:2px;
+}
+.data-grid .col-head {
+  text-align:center;
+  font-size:.78em;
+  color:var(--pink);
+  font-weight:700;
+  padding-bottom:3px;
+  letter-spacing:1px;
+}
+.data-grid .row-label {
+  font-size:.75em;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  padding-right:4px;
+}
+.data-val {
+  text-align:center;
+  font-family:var(--mono);
+  font-size:.8em;
+  padding:2px 0;
+  color:var(--text);
+}
+.data-divider {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  margin: 3px 0;
+}
+.data-divider {
+  grid-column:1/-1;
+  border-top:1px solid var(--border);
+  margin:3px 0;
+}
+
+/* Input cells for intermediate values */
+.int-input-wrap { position:relative; overflow:hidden; }
+.int-input {
+  width:100%;
+  background:#ffffff;
+  border:2px solid #94a3b8;
+  border-radius:4px;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:.8em;
+  text-align:center;
+  padding:3px 2px;
+  outline:none;
+  transition:background .2s, border-color .2s, box-shadow .2s;
+}
+.int-input:focus { border-color:var(--cyan); box-shadow: 0 0 0 3px rgba(8,145,178,.15); }
+.int-input.correct { background:rgba(22,163,74,.12); border-color:var(--green); }
+.int-input.incorrect { background:rgba(220,38,38,.10); border-color:var(--red); }
+.int-input.incorrect { background:rgba(220,38,38,.10); border-color:var(--red); }
+.int-status {
+  font-size:.62em;
+  text-align:center;
+  height:10px;
+  line-height:10px;
+  color:var(--muted);
+}
+.int-status.correct { color:var(--green); }
+.int-status.incorrect { color:var(--red); }
+
+/* Final answer section */
+.final-section {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:8px 14px;
+  flex-shrink:0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.final-section .sec-title {
+  font-size:.72em;
+  color:var(--amber);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  margin-bottom:6px;
+}
+.final-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.final-label { font-size:.82em; color:var(--muted); white-space:nowrap; }
+.final-input {
+  width:130px;
+  background:#ffffff;
+  border:2.5px solid #94a3b8;
+  border-radius:4px;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:.92em;
+  text-align:center;
+  padding:5px 6px;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.final-input:focus { border-color:var(--amber); box-shadow: 0 0 0 3px rgba(180,83,9,.15); }
+
+/* Attempts dots */
+.attempts-wrap { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.attempt-dot {
+  width:11px; height:11px;
+  border-radius:50%;
+  background:var(--card2);
+  border:2px solid var(--border);
+  transition:all .3s;
+}
+.attempt-dot.used { background:var(--red); border-color:var(--red); }
+.attempt-dot.correct { background:var(--green); border-color:var(--green); }
+
+/* Feedback / hints area */
+.feedback-section {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:7px 12px;
+  flex-shrink:0;
+  min-height:56px;
+  font-size:.82em;
+  line-height:1.5;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.feedback-section .fb-label {
+  font-size:.7em;
+  color:var(--purple);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+#hint-text { color:var(--amber); margin-top:2px; }
+#correct-answer-display { color:var(--green); margin-top:2px; font-weight:700; font-family:var(--mono); }
+#wrong-message { color:var(--red); margin-top:2px; }
+
+/* Bottom action bar */
+.action-bar {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+  flex-wrap:wrap;
+}
+.q-counter { font-size:.75em; color:var(--muted); margin-left:auto; }
+
+/* ======================== RESULTS SCREEN ======================== */
+#screen-results {
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  padding:24px;
+  text-align:center;
+}
+.results-title {
+  font-size:2.4em;
+  font-weight:900;
+  background:linear-gradient(135deg, var(--amber), var(--pink));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.results-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:24px 40px;
+  min-width:320px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+.score-big {
+  font-size:4em;
+  font-weight:900;
+  color:var(--green);
+  font-family:var(--mono);
+}
+.score-detail { color:var(--muted); font-size:.95em; margin-top:6px; }
+.grade-msg { font-size:1.3em; color:var(--amber); font-weight:700; margin-top:12px; }
+.stars { font-size:2em; margin-top:4px; }
+
+/* decorative physics symbols in background */
+.phys-deco {
+  position:fixed;
+  pointer-events:none;
+  z-index:0;
+  font-size:5em;
+  color:rgba(8,145,178,.07);
+  font-family:var(--mono);
+  user-select:none;
+}
+</style>
+</head>
+<body>
+
+<!-- Decorative physics background symbols -->
+<div class="phys-deco" style="top:5%;left:2%">Δ</div>
+<div class="phys-deco" style="top:20%;right:3%">σ</div>
+<div class="phys-deco" style="bottom:15%;left:4%">±</div>
+<div class="phys-deco" style="bottom:8%;right:5%">∑</div>
+<div class="phys-deco" style="top:50%;left:50%;transform:translate(-50%,-50%)">%</div>
+<div class="phys-deco" style="top:3%;left:18%">ε</div>
+<div class="phys-deco" style="top:8%;right:22%">μ</div>
+<div class="phys-deco" style="top:14%;left:38%">π</div>
+<div class="phys-deco" style="top:32%;left:8%">λ</div>
+<div class="phys-deco" style="top:28%;right:18%">θ</div>
+<div class="phys-deco" style="top:42%;left:28%">α</div>
+<div class="phys-deco" style="top:38%;right:32%">β</div>
+<div class="phys-deco" style="top:60%;left:14%">ω</div>
+<div class="phys-deco" style="top:55%;right:10%">φ</div>
+<div class="phys-deco" style="top:68%;left:44%">η</div>
+<div class="phys-deco" style="top:72%;right:28%">ρ</div>
+<div class="phys-deco" style="top:80%;left:22%">γ</div>
+<div class="phys-deco" style="top:88%;right:16%">τ</div>
+<div class="phys-deco" style="top:78%;left:58%">κ</div>
+<div class="phys-deco" style="top:92%;left:36%">ξ</div>
+<div class="phys-deco" style="top:12%;left:72%">∫</div>
+<div class="phys-deco" style="top:46%;left:64%">√</div>
+<div class="phys-deco" style="top:64%;right:42%">∝</div>
+<div class="phys-deco" style="top:25%;left:54%">∂</div>
+<div class="phys-deco" style="top:85%;left:78%">∞</div>
+<div class="phys-deco" style="top:18%;left:84%">≈</div>
+<div class="phys-deco" style="top:52%;right:50%">×</div>
+<div class="phys-deco" style="top:35%;left:88%">÷</div>
+<div class="phys-deco" style="top:96%;right:38%">Ω</div>
+<div class="phys-deco" style="top:7%;left:46%">Σ</div>
+<div class="phys-deco" style="top:74%;left:6%">Φ</div>
+<div class="phys-deco" style="top:43%;right:6%">Λ</div>
+<div class="phys-deco" style="top:58%;left:82%">Π</div>
+<div class="phys-deco" style="top:22%;left:62%">Γ</div>
+<div class="phys-deco" style="top:90%;left:12%">Θ</div>
+
+<!-- ================================================================
+     INTRO SCREEN
+     ================================================================ -->
+<div id="screen-intro" class="screen active">
+  <div class="intro-logo">Uncertainty<br>Propagation Drill</div>
+  <div class="intro-sub">Physics with Keith</div>
+
+  <div class="rules-box">
+    <h3>📋 How to Play</h3>
+    <div class="rule">⏱ You have <b>15 minutes</b> to answer as many questions as possible.</div>
+    <div class="rule">📊 Each question shows you <b>7 measurements</b> each of quantities b, c, d, and e.</div>
+    <div class="rule"><b>Step 1 —</b> Calculate the <b>mean</b>, <b>absolute uncertainty Δ</b> (half-range), and <b>% uncertainty</b> for each variable. Enter them in the boxes — they'll go <span style="color:var(--green)">green</span> if correct.</div>
+    <div class="rule"><b>Step 2 —</b> Calculate the <b>mean value of a</b> using the means of b, c, d, e.</div>
+    <div class="rule"><b>Step 3 —</b> Propagate uncertainties to find <b>Δa</b> (to 2 s.f.) using the rules below.</div>
+    <div class="rule"><b>Step 4 —</b> Round the mean a so its <b>decimal places match Δa</b>.</div>
+    <div class="rule" style="margin-top:8px; padding:8px; background:rgba(8,145,178,.07); border-radius:6px; border-left:3px solid var(--cyan)">
+      <b style="color:var(--cyan)">Uncertainty Rules:</b><br>
+      a = b ± c → <b>Δa = Δb + Δc</b> (absolute uncertainties add)<br>
+      a = b × c or b/c → <b>ε<sub>a</sub> = ε<sub>B</sub> + ε<sub>c</sub></b> (relative uncertainties add, where ε = Δ/value)<br>
+      a = b<sup>n</sup> → <b>ε<sub>a</sub> = n × ε<sub>B</sub></b> (multiply relative uncertainty by the power)
+    </div>
+    <div class="rule">🎯 You get <b>3 attempts</b> per question. Hints appear after wrong answers.</div>
+    <div class="rule">⌨ Press <b>Enter</b> to move between answer boxes; Enter again to submit. When "Next ▶" appears, Enter moves on.</div>
+  </div>
+
+  <button class="btn btn-primary" onclick="startGame()">🚀 Start Drill!</button>
+</div>
+
+<!-- ================================================================
+     GAME SCREEN
+     ================================================================ -->
+<div id="screen-game" class="screen">
+
+  <!-- Header row -->
+  <div class="game-header">
+    <div class="game-title">Uncertainty Propagation Drill - Physics With Keith</div>
+    <div class="score-wrap">✔ Correct: <span id="score-display">0</span></div>
+    <div class="timer-wrap">
+      <span class="timer-label">⏱</span>
+      <div id="timer-display">15:00</div>
+    </div>
+    <button class="btn btn-warn" onclick="confirmEndEarly()">End Early</button>
+  </div>
+
+  <!-- Equation display -->
+  <div class="equation-bar">
+    <div class="eq-label">Find the value and uncertainty of a for the equation:</div>
+    <div class="eq-formula" id="eq-display">—</div>
+  </div>
+
+  <!-- Data table: 7 values + intermediate answer inputs -->
+  <div class="data-section">
+    <div class="data-grid" id="data-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Final answer section -->
+  <div class="final-section">
+    <div class="sec-title">Final Answers (Steps 2, 3 &amp; 4)</div>
+    <div class="final-row">
+      <span class="final-label">Mean a =</span>
+      <input type="number" id="ans-mean" class="final-input" placeholder="e.g. 12.4"
+             onkeydown="handleFinalKey(event,'mean')" step="any">
+
+      <span class="final-label" style="margin-left:8px">Δa =</span>
+      <input type="number" id="ans-unc" class="final-input" placeholder="e.g. 0.35"
+             onkeydown="handleFinalKey(event,'unc')" step="any">
+
+      <div class="attempts-wrap" id="attempts-dots">
+        <span style="font-size:.72em;color:var(--muted)">Attempts:</span>
+        <div class="attempt-dot" id="dot-0"></div>
+        <div class="attempt-dot" id="dot-1"></div>
+        <div class="attempt-dot" id="dot-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback / hints -->
+  <div class="feedback-section">
+    <div class="fb-label" id="fb-label">Feedback</div>
+    <div id="hint-text"></div>
+    <div id="correct-answer-display"></div>
+    <div id="wrong-message"></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="action-bar">
+    <button class="btn btn-submit" id="btn-submit" onclick="submitAnswer()">Submit ✓</button>
+    <button class="btn btn-cheat" onclick="runCheat()">🔓 Cheat</button>
+    <button class="btn btn-next" id="btn-next" onclick="nextQuestion()" style="display:none">Next ▶</button>
+    <div class="q-counter" id="q-counter">Question 1</div>
+  </div>
+
+</div>
+
+<!-- ================================================================
+     RESULTS SCREEN
+     ================================================================ -->
+<div id="screen-results" class="screen">
+  <div class="results-title">🏁 Time's Up!</div>
+  <div class="results-card">
+    <div class="score-big" id="final-score">0</div>
+    <div class="score-detail" id="score-detail">correct answers</div>
+    <div class="grade-msg" id="grade-msg"></div>
+    <div class="stars" id="grade-stars"></div>
+  </div>
+  <button class="btn btn-again" onclick="restartGame()">🔄 Play Again</button>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+/* =====================================================================
+   MATH UTILITIES
+   ===================================================================== */
+
+/**
+ * Round n to sf significant figures.
+ * e.g. roundSF(0.00347, 2) → 0.0035
+ */
+function roundSF(n, sf) {
+  if (n === 0) return 0;
+  const sign = n < 0 ? -1 : 1;
+  n = Math.abs(n);
+  const mag = Math.floor(Math.log10(n));
+  const factor = Math.pow(10, sf - 1 - mag);
+  return sign * Math.round(n * factor) / factor;
+}
+
+/**
+ * Round n to dp decimal places.
+ */
+function roundDP(n, dp) {
+  const f = Math.pow(10, dp);
+  return Math.round(n * f) / f;
+}
+
+/**
+ * Get the number of decimal places in n (as a number, not a string).
+ * e.g. getDP(0.05) → 2, getDP(5) → 0
+ */
+function getDP(n) {
+  n = Math.abs(n);
+  if (n === 0) return 0;
+  const s = n.toFixed(10).replace(/0+$/, '');
+  const parts = s.split('.');
+  return parts.length > 1 ? parts[1].length : 0;
+}
+
+/**
+ * Format a number for display with a given number of decimal places.
+ */
+function fmt(n, dp) {
+  return Number(n).toFixed(Math.max(0, dp));
+}
+
+/**
+ * Format a number to exactly sf significant figures as a string,
+ * preserving trailing zeros.
+ * e.g. fmtSF(1, 2) → "1.0", fmtSF(6, 2) → "6.0", fmtSF(0.045, 2) → "0.045"
+ */
+function fmtSF(n, sf) {
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  const rounded = roundSF(abs, sf);
+  const mag = Math.floor(Math.log10(rounded));
+  const dp = Math.max(0, sf - 1 - mag);
+  return (n < 0 ? '-' : '') + rounded.toFixed(dp);
+}
+
+/* =====================================================================
+   EQUATION TEMPLATES
+   Each template has:
+     id         - unique number
+     htmlEq     - HTML string for equation display (may use <sup>)
+     compute    - function(b,c,d,e) → value of a
+     uncertainty - function(b,c,d,e,db,dc,dd,de) → {a, da, hint1, hint2}
+     minDiff    - if defined, b − c must be at least this many times c
+                  (to ensure positive result for subtraction templates)
+   ===================================================================== */
+const TEMPLATES = [
+  // ── TYPE 1: pure multiplication ──
+  {
+    id: 1,
+    htmlEq: 'a = b × c × d × e',
+    compute: (b,c,d,e) => b*c*d*e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = b*c*d*e;
+      // All multiplicative: relative uncertainties add
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      const Ea = Eb + Ec + Ed + Ee;
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: 'All variables are multiplied together. For multiplication/division, <b>relative uncertainties add</b>: ε<sub>a</sub> = ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `ε<sub>B</sub>=${Eb.toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa = ε<sub>a</sub>×a = ${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 2: multiplication with one division ──
+  {
+    id: 2,
+    htmlEq: 'a = b × c × d / e',
+    compute: (b,c,d,e) => (b*c*d)/e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = (b*c*d)/e;
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      const Ea = Eb + Ec + Ed + Ee; // division also ADDS relative uncertainties
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: 'For both multiplication AND division, <b>relative uncertainties always add</b>: ε<sub>a</sub> = ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `ε<sub>B</sub>=${Eb.toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 3: b squared ──
+  {
+    id: 3,
+    htmlEq: 'a = b<sup>2</sup> × c × d / e',
+    compute: (b,c,d,e) => (b*b*c*d)/e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = (b*b*c*d)/e;
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      // Power rule: b² means multiply Eᵦ by 2
+      const Ea = 2*Eb + Ec + Ed + Ee;
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: 'b is <b>squared</b> (power = 2). When a variable is raised to a power n, multiply its relative uncertainty by n: ε<sub>a</sub> = 2ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `2ε<sub>B</sub>=${(2*Eb).toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 4: b cubed ──
+  {
+    id: 4,
+    htmlEq: 'a = b<sup>3</sup> × c / (d × e)',
+    compute: (b,c,d,e) => (b*b*b*c)/(d*e),
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = (b*b*b*c)/(d*e);
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      const Ea = 3*Eb + Ec + Ed + Ee; // power = 3
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: 'b is <b>cubed</b> (power = 3). Multiply ε<sub>B</sub> by 3: ε<sub>a</sub> = 3ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `3ε<sub>B</sub>=${(3*Eb).toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 5: square root of b ──
+  {
+    id: 5,
+    htmlEq: 'a = b<sup>½</sup> × c × d × e',
+    compute: (b,c,d,e) => Math.sqrt(b)*c*d*e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = Math.sqrt(b)*c*d*e;
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      const Ea = 0.5*Eb + Ec + Ed + Ee; // power = ½
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: '√b = b<sup>½</sup>, so power = ½. Multiply ε<sub>B</sub> by ½: ε<sub>a</sub> = ½ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `½ε<sub>B</sub>=${(0.5*Eb).toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 6: cube root of b ──
+  {
+    id: 6,
+    htmlEq: 'a = b<sup>⅓</sup> × c × d / e',
+    compute: (b,c,d,e) => Math.cbrt(b)*c*d/e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = Math.cbrt(b)*c*d/e;
+      const Eb = db/b, Ec = dc/c, Ed = dd/d, Ee = de/e;
+      const Ea = (1/3)*Eb + Ec + Ed + Ee; // power = ⅓
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: 'b<sup>⅓</sup> means power = 1/3. Multiply ε<sub>B</sub> by 1/3: ε<sub>a</sub> = ⅓ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>d</sub> + ε<sub>e</sub>',
+        hint2: `⅓ε<sub>B</sub>=${((1/3)*Eb).toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 7: pure addition ──
+  {
+    id: 7,
+    htmlEq: 'a = b + c + d + e',
+    compute: (b,c,d,e) => b+c+d+e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = b+c+d+e;
+      // Absolute uncertainties add for addition/subtraction
+      const da = db + dc + dd + de;
+      return { a, da,
+        hint1: 'All variables are added. For addition/subtraction, <b>absolute uncertainties add</b>: Δa = Δb + Δc + Δd + Δe',
+        hint2: `Δa = ${fmtSF(db,2)} + ${fmtSF(dc,2)} + ${fmtSF(dd,2)} + ${fmtSF(de,2)} = ${fmtSF(da,2)}`
+      };
+    }
+  },
+
+  // ── TYPE 8: addition and subtraction mixed ──
+  {
+    id: 8,
+    htmlEq: 'a = b + c − d + e',
+    compute: (b,c,d,e) => b+c-d+e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const a = b+c-d+e;
+      // KEY CONCEPT: whether + or −, absolute uncertainties STILL add
+      const da = db + dc + dd + de;
+      return { a, da,
+        hint1: '<b>Crucial point:</b> whether you add OR subtract, absolute uncertainties always <b>add</b>. Δa = Δb + Δc + Δd + Δe (even though d is subtracted!)',
+        hint2: `Δa = Δb + Δc + Δd + Δe = ${fmtSF(db,2)} + ${fmtSF(dc,2)} + ${fmtSF(dd,2)} + ${fmtSF(de,2)} = ${fmtSF(da,2)}`
+      };
+    }
+  },
+
+  // ── TYPE 9: (b + c) × d / e  (MIXED: add then multiply) ──
+  {
+    id: 9,
+    htmlEq: 'a = (b + c) × d / e',
+    compute: (b,c,d,e) => (b+c)*d/e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      // Step 1: intermediate x = b + c
+      const x = b + c;
+      const dx = db + dc;          // absolute uncertainty in x
+      const Ex = dx / x;           // convert to RELATIVE
+      // Step 2: a = x × d / e  →  relative uncertainties add
+      const Ed = dd/d, Ee = de/e;
+      const Ea = Ex + Ed + Ee;
+      const a = (b+c)*d/e;
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: '<b>Multi-step:</b> First find Δ(b+c) = Δb + Δc. Then convert to relative: ε<sub>(b+c)</sub> = Δ(b+c)/(b+c). Then ε<sub>a</sub> = ε<sub>(b+c)</sub> + ε<sub>d</sub> + ε<sub>e</sub>.',
+        hint2: `Δx=${dx.toFixed(4)}, x=${x.toFixed(4)}, ε<sub>(b+c)</sub>=${Ex.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 10: (b − c) × d × e  (ensure b > c for positive result) ──
+  {
+    id: 10,
+    htmlEq: 'a = (b − c) × d × e',
+    compute: (b,c,d,e) => (b-c)*d*e,
+    needsBgtC: true,  // flag: b must be > c (enforced in generation)
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      const x = b - c;
+      // Absolute uncertainties ADD even for subtraction
+      const dx = db + dc;
+      const Ex = dx / Math.abs(x);  // relative uncertainty of x
+      const Ed = dd/d, Ee = de/e;
+      const Ea = Ex + Ed + Ee;
+      const a = (b-c)*d*e;
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: '<b>Subtraction step:</b> Δ(b−c) = Δb + Δc (absolute uncertainties ADD for subtraction). Then convert to relative and multiply.',
+        hint2: `Δx=${dx.toFixed(4)}, x=b−c=${x.toFixed(4)}, ε<sub>(b−c)</sub>=${Ex.toFixed(4)}, ε<sub>d</sub>=${Ed.toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 11: b × c / (d + e)  (divide by a sum) ──
+  {
+    id: 11,
+    htmlEq: 'a = b × c / (d + e)',
+    compute: (b,c,d,e) => b*c/(d+e),
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      // Step 1: denominator x = d + e
+      const x = d + e;
+      const dx = dd + de;           // absolute uncertainty in x
+      const Ex = dx / x;            // relative uncertainty of x
+      // Step 2: a = b × c / x  →  Ea = Eb + Ec + Ex
+      const Eb = db/b, Ec = dc/c;
+      const Ea = Eb + Ec + Ex;
+      const a = b*c/(d+e);
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: '<b>Multi-step:</b> First find Δ(d+e) = Δd + Δe. Then ε<sub>(d+e)</sub> = Δ(d+e)/(d+e). Then ε<sub>a</sub> = ε<sub>B</sub> + ε<sub>c</sub> + ε<sub>(d+e)</sub>.',
+        hint2: `Δx=${dx.toFixed(4)}, x=${x.toFixed(4)}, ε<sub>(d+e)</sub>=${Ex.toFixed(4)}, ε<sub>B</sub>=${Eb.toFixed(4)}, ε<sub>c</sub>=${Ec.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+
+  // ── TYPE 12: b² × (c + d) / e  (power AND mixed addition) ──
+  {
+    id: 12,
+    htmlEq: 'a = b<sup>2</sup> × (c + d) / e',
+    compute: (b,c,d,e) => b*b*(c+d)/e,
+    uncertainty(b,c,d,e,db,dc,dd,de) {
+      // Step 1: intermediate x = c + d
+      const x = c + d;
+      const dx = dc + dd;
+      const Ex = dx / x;
+      // Step 2: a = b² × x / e
+      // Power rule on b: contribute 2×Eb
+      const Eb = db/b, Ee = de/e;
+      const Ea = 2*Eb + Ex + Ee;
+      const a = b*b*(c+d)/e;
+      const da = Ea * Math.abs(a);
+      return { a, da,
+        hint1: '<b>Two steps:</b> (1) Δ(c+d) = Δc + Δd → convert to ε<sub>(c+d)</sub>. (2) Apply power rule on b (b²): ε<sub>a</sub> = 2ε<sub>B</sub> + ε<sub>(c+d)</sub> + ε<sub>e</sub>',
+        hint2: `Δx=${dx.toFixed(4)}, x=${x.toFixed(4)}, ε<sub>(c+d)</sub>=${Ex.toFixed(4)}, 2ε<sub>B</sub>=${(2*Eb).toFixed(4)}, ε<sub>e</sub>=${Ee.toFixed(4)} → ε<sub>a</sub>=${Ea.toFixed(4)} → Δa=${da.toFixed(4)}`
+      };
+    }
+  },
+];
+
+/* =====================================================================
+   DATA GENERATION
+   Generate 7 realistic measurement values for a single variable.
+   Returns: { values[], mean, unc, pct, dp }
+   ===================================================================== */
+function generateVariable(seed_mean, seed_unc_frac) {
+  // Target mean: 2 sig figs, between 3 and 60
+  const rawMean = seed_mean !== undefined ? seed_mean : (3 + Math.random() * 57);
+  const targetMean = roundSF(rawMean, 2);
+
+  // Target uncertainty: 4–14% of mean, rounded to 1 sig fig
+  const uncFrac = seed_unc_frac !== undefined ? seed_unc_frac : (0.04 + Math.random() * 0.10);
+  const targetUnc = roundSF(targetMean * uncFrac, 1);
+
+  // Decimal places: driven by the uncertainty (so data looks realistic)
+  const uncDP = Math.max(0, getDP(targetUnc));
+  const dataDP = uncDP; // data values shown to same d.p. as uncertainty
+
+  // Generate 7 values scattered within ±targetUnc of targetMean
+  const values = [];
+  for (let i = 0; i < 7; i++) {
+    const scatter = (Math.random() * 2 - 1) * targetUnc;
+    values.push(roundDP(targetMean + scatter, dataDP));
+  }
+
+  // Ensure at least 2 distinct values (avoid degenerate case)
+  if (new Set(values).size === 1) {
+    values[Math.floor(Math.random() * 7)] = roundDP(targetMean + targetUnc * 0.6, dataDP);
+  }
+
+  // Re-calculate mean and half-range from the actual generated values
+  const calcMean = values.reduce((s, v) => s + v, 0) / 7;
+  const maxVal = Math.max(...values);
+  const minVal = Math.min(...values);
+  const halfRange = (maxVal - minVal) / 2;
+
+  // Express uncertainty to 2 sig figs (AQA allows 1–2 s.f.; we use 2 for precision)
+  const dispUnc = roundSF(halfRange, 2);
+  const dispDP = Math.max(0, getDP(dispUnc));
+  const dispMean = roundDP(calcMean, dispDP);
+  // Percentage uncertainty (2 s.f.)
+  const dispPct = roundSF((dispUnc / Math.abs(dispMean)) * 100, 2);
+
+  return { values, mean: dispMean, unc: dispUnc, pct: dispPct, dp: dispDP, dataDP };
+}
+
+/* =====================================================================
+   QUESTION GENERATION
+   Pick a random template and generate data for b, c, d, e.
+   ===================================================================== */
+function generateQuestion() {
+  const tmpl = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+
+  let varB, varC, varD, varE;
+  let tries = 0;
+
+  do {
+    varB = generateVariable();
+    varC = generateVariable();
+    varD = generateVariable();
+    varE = generateVariable();
+    tries++;
+    // For template 10 (b − c): ensure b > c by a safe margin
+    // We regenerate until b is at least 1.5× c.
+    if (tmpl.needsBgtC && varB.mean < varC.mean * 1.6) {
+      // Force b's mean to be larger
+      const newBMean = varC.mean * (1.8 + Math.random() * 0.8);
+      varB = generateVariable(newBMean, 0.05 + Math.random() * 0.08);
+    }
+  } while (tries < 50 && tmpl.needsBgtC && varB.mean <= varC.mean);
+
+  // Compute correct a and uncertainty using the re-calculated means/uncertainties
+  const result = tmpl.uncertainty(
+    varB.mean, varC.mean, varD.mean, varE.mean,
+    varB.unc,  varC.unc,  varD.unc,  varE.unc
+  );
+
+  // Round uncertainty to 2 s.f. → determines precision of mean a
+  const daRounded = roundSF(result.da, 2);
+
+  // Express Δa as X.Y × 10^aMag (2SF always gives 1dp coefficient).
+  // The "step" is the value of 1 unit at the last SF of Δa.
+  // e.g. Δa=25000 → aMag=4, step=1000 → round mean to nearest 1000
+  //      Δa=6.0   → aMag=0, step=0.1  → round mean to nearest 0.1
+  //      Δa=0.45  → aMag=-1, step=0.01 → round mean to nearest 0.01
+  const aMag  = Math.floor(Math.log10(Math.abs(daRounded)));   // floor(log10(|Δa|))
+  const step  = Math.pow(10, aMag - 1);                        // precision step
+  const dpA   = Math.max(0, 1 - aMag);                         // decimal places for display
+  const aRounded = Math.round(result.a / step) * step;
+
+  return {
+    template: tmpl,
+    vars: { b: varB, c: varC, d: varD, e: varE },
+    correctA: aRounded,
+    correctDA: daRounded,
+    dpA,
+    aMag,
+    hint1: result.hint1,
+    hint2: result.hint2,
+  };
+}
+
+/* =====================================================================
+   GAME STATE
+   ===================================================================== */
+const STATE = {
+  timerInterval: null,
+  secondsLeft: 15 * 60,
+  score: 0,
+  questionNum: 0,
+  question: null,
+  attemptsUsed: 0,
+  maxAttempts: 3,
+  questionDone: false,
+  nextOnEnter: false,  // true when "Next" button is visible
+};
+
+/* =====================================================================
+   SCREEN MANAGEMENT
+   ===================================================================== */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  STATE.secondsLeft = 15 * 60;
+  STATE.score = 0;
+  STATE.questionNum = 0;
+  STATE.timerInterval = setInterval(timerTick, 1000);
+  showScreen('screen-game');
+  loadQuestion();
+}
+
+function restartGame() {
+  clearInterval(STATE.timerInterval);
+  showScreen('screen-intro');
+}
+
+/* =====================================================================
+   TIMER
+   ===================================================================== */
+function timerTick() {
+  STATE.secondsLeft--;
+  updateTimerDisplay();
+  if (STATE.secondsLeft <= 0) {
+    clearInterval(STATE.timerInterval);
+    endGame();
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(STATE.secondsLeft / 60);
+  const s = STATE.secondsLeft % 60;
+  const el = document.getElementById('timer-display');
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  el.classList.toggle('urgent', STATE.secondsLeft <= 60);
+}
+
+function confirmEndEarly() {
+  // No browser popups: we'll just end the game directly.
+  // A real "are you sure" could be done with an in-page modal,
+  // but to keep it simple and on-screen, we end immediately.
+  clearInterval(STATE.timerInterval);
+  endGame();
+}
+
+/* =====================================================================
+   LOAD & DISPLAY QUESTION
+   ===================================================================== */
+function loadQuestion() {
+  STATE.question = generateQuestion();
+  STATE.attemptsUsed = 0;
+  STATE.questionDone = false;
+  STATE.nextOnEnter = false;
+  STATE.questionNum++;
+
+  // Reset UI
+  document.getElementById('ans-mean').value = '';
+  document.getElementById('ans-unc').value = '';
+  document.getElementById('ans-mean').style.borderColor = '';
+  document.getElementById('ans-unc').style.borderColor = '';
+  document.getElementById('hint-text').innerHTML = '';
+  document.getElementById('correct-answer-display').innerHTML = '';
+  document.getElementById('wrong-message').innerHTML = '';
+  document.getElementById('fb-label').textContent = 'Feedback';
+  document.getElementById('btn-submit').style.display = '';
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('score-display').textContent = STATE.score;
+  document.getElementById('q-counter').textContent = `Question ${STATE.questionNum}`;
+  resetDots();
+
+  // Display equation
+  document.getElementById('eq-display').innerHTML =
+    STATE.question.template.htmlEq;
+
+  // Build data grid
+  buildDataGrid();
+}
+
+/**
+ * Build the data table grid with 7 value rows + 3 input rows.
+ */
+function buildDataGrid() {
+  const q = STATE.question;
+  const vars = ['b','c','d','e'];
+  const grid = document.getElementById('data-grid');
+  grid.innerHTML = '';
+
+  // Column headers
+  const blank = document.createElement('div'); // label column header
+  grid.appendChild(blank);
+  vars.forEach(v => {
+    const h = document.createElement('div');
+    h.className = 'col-head';
+    h.style.fontStyle = 'italic';
+    h.textContent = v;
+    grid.appendChild(h);
+  });
+
+  // 7 data value rows
+  for (let i = 0; i < 7; i++) {
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = i+1 + '.';
+    grid.appendChild(label);
+    vars.forEach(v => {
+      const cell = document.createElement('div');
+      cell.className = 'data-val';
+      const varData = q.vars[v];
+      cell.textContent = varData.values[i].toFixed(varData.dataDP);
+      grid.appendChild(cell);
+    });
+  }
+
+  // Divider
+  const div = document.createElement('div');
+  div.className = 'data-divider';
+  grid.appendChild(div);
+
+  // Input rows: Mean, Δ, %Δ
+  const rowDefs = [
+    { label:'Mean',  key:'mean', unit:'' },
+    { label:'Δ',     key:'unc',  unit:'' },
+    { label:'ε (%)', key:'pct',  unit:'%' },
+  ];
+
+  rowDefs.forEach(row => {
+    const lbl = document.createElement('div');
+    lbl.className = 'row-label';
+    lbl.innerHTML = `<b>${row.label}</b>`;
+    lbl.style.fontSize = '.72em';
+    grid.appendChild(lbl);
+
+    vars.forEach(v => {
+      const wrap = document.createElement('div');
+      wrap.className = 'int-input-wrap';
+
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.step = 'any';
+      inp.className = 'int-input';
+      inp.id = `int-${row.key}-${v}`;
+      inp.setAttribute('data-var', v);
+      inp.setAttribute('data-type', row.key);
+      inp.addEventListener('input', () => checkIntermediateInput(inp, v, row.key));
+
+      const status = document.createElement('div');
+      status.className = 'int-status';
+      status.id = `int-status-${row.key}-${v}`;
+
+      wrap.appendChild(inp);
+      wrap.appendChild(status);
+      grid.appendChild(wrap);
+    });
+  });
+}
+
+/* =====================================================================
+   INTERMEDIATE VALUE CHECKING
+   Live feedback as student types into mean/Δ/%Δ boxes.
+   ===================================================================== */
+
+/**
+ * Tolerance check: returns true if studentVal rounds to 2 SF and differs
+ * from correctVal (also at 2 SF) by at most 1 unit in the second SF.
+ */
+function matchesSF(studentVal, correctVal, sf) {
+  if (isNaN(studentVal) || studentVal <= 0) return false;
+  const sR = roundSF(Math.abs(studentVal), sf);
+  const cR = roundSF(Math.abs(correctVal), sf);
+  if (cR === 0) return sR === 0;
+  const mag = Math.floor(Math.log10(cR));
+  const tol = Math.pow(10, mag - (sf - 1)); // ±1 unit at the last SF
+  return Math.abs(sR - cR) <= tol + 1e-10;
+}
+
+function checkIntermediateInput(inp, varName, type) {
+  const val = parseFloat(inp.value);
+  if (isNaN(val) || inp.value.trim() === '') {
+    inp.className = 'int-input';
+    document.getElementById(`int-status-${type}-${varName}`).textContent = '';
+    document.getElementById(`int-status-${type}-${varName}`).className = 'int-status';
+    return;
+  }
+
+  const varData = STATE.question.vars[varName];
+  let correct = false;
+
+  if (type === 'mean') {
+    // Check mean: accept if it matches to appropriate dp
+    const diff = Math.abs(val - varData.mean);
+    const tol = Math.pow(10, -varData.dp) * 0.5 + 1e-9; // half a unit at last dp
+    correct = diff <= tol;
+  } else if (type === 'unc') {
+    // Check absolute uncertainty to 2 s.f.
+    correct = matchesSF(val, varData.unc, 2);
+  } else if (type === 'pct') {
+    // Check percentage uncertainty to 2 s.f.
+    correct = matchesSF(val, varData.pct, 2);
+  }
+
+  inp.className = 'int-input ' + (correct ? 'correct' : 'incorrect');
+  const statusEl = document.getElementById(`int-status-${type}-${varName}`);
+  statusEl.className = 'int-status ' + (correct ? 'correct' : 'incorrect');
+  statusEl.textContent = correct ? '(correct)' : '(incorrect)';
+}
+
+/* =====================================================================
+   FINAL ANSWER HANDLING
+   ===================================================================== */
+
+/**
+ * Keyboard handler for final answer boxes.
+ * mean → unc: Enter moves focus
+ * unc: Enter submits (or clicks Next if visible)
+ */
+function handleFinalKey(event, field) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+
+  if (STATE.nextOnEnter) {
+    nextQuestion();
+    return;
+  }
+
+  if (field === 'mean') {
+    document.getElementById('ans-unc').focus();
+  } else if (field === 'unc') {
+    submitAnswer();
+  }
+}
+
+/**
+ * Submit the student's final answer for mean a and Δa.
+ */
+function submitAnswer() {
+  if (STATE.questionDone) return;
+
+  const studentMean = parseFloat(document.getElementById('ans-mean').value);
+  const studentUnc  = parseFloat(document.getElementById('ans-unc').value);
+
+  if (isNaN(studentMean) || isNaN(studentUnc)) {
+    document.getElementById('wrong-message').textContent =
+      '⚠ Please enter both the mean a and the uncertainty Δa.';
+    return;
+  }
+  document.getElementById('wrong-message').textContent = '';
+
+  const q = STATE.question;
+  STATE.attemptsUsed++;
+
+  // ── Check uncertainty (±1 in last digit at 2 s.f.) ──
+  const uncCorrect = checkUncertainty(studentUnc, q.correctDA);
+
+  // ── Check mean a: must match rounded mean to appropriate precision ──
+  const meanCorrect = checkMean(studentMean, q.correctA, q.aMag);
+
+  const allCorrect = uncCorrect && meanCorrect;
+
+  // Update attempt dots AFTER determining correctness
+  updateDots(allCorrect);
+
+  if (allCorrect) {
+    // Correct!
+    STATE.score++;
+    document.getElementById('score-display').textContent = STATE.score;
+    showCorrectAnswer(true);
+    markFinalInputs(true, true);
+    endQuestion();
+  } else {
+    // Highlight which parts are wrong
+    markFinalInputs(meanCorrect, uncCorrect);
+
+    if (STATE.attemptsUsed >= STATE.maxAttempts) {
+      // Out of attempts
+      showCorrectAnswer(false);
+      endQuestion();
+    } else {
+      // Show hint
+      const remaining = STATE.maxAttempts - STATE.attemptsUsed;
+      const hintEl = document.getElementById('hint-text');
+
+      if (STATE.attemptsUsed === 1) {
+        hintEl.innerHTML = `<b>💡 Hint:</b> ${q.hint1}<br><small style="color:var(--muted)">${remaining} attempt${remaining!==1?'s':''} remaining</small>`;
+        document.getElementById('fb-label').textContent = 'Hint';
+      } else if (STATE.attemptsUsed === 2) {
+        hintEl.innerHTML = `<b>💡 Worked hint:</b> ${q.hint2}<br><small style="color:var(--muted)">${remaining} attempt remaining</small>`;
+        document.getElementById('fb-label').textContent = 'Worked Hint';
+      }
+    }
+  }
+}
+
+/**
+ * Check if student's uncertainty matches correct uncertainty.
+ * Rules: round both to 2 s.f., then first digit must match exactly
+ * and second digit may differ by at most 1.
+ */
+function checkUncertainty(student, correct) {
+  if (isNaN(student) || student <= 0) return false;
+  const sR = roundSF(Math.abs(student), 2);
+  const cR = roundSF(Math.abs(correct), 2);
+  if (cR === 0) return sR === 0;
+  // Tolerance: ±1 unit at the second significant figure of the correct value
+  const mag = Math.floor(Math.log10(cR)); // order of magnitude of first SF
+  const tol = Math.pow(10, mag - 1);      // value of one unit at second SF
+  return Math.abs(sR - cR) <= tol + 1e-10;
+}
+
+/**
+ * Check if student's mean matches the correct mean.
+ * aMag = floor(log10(|Δa_rounded|)) — the order of magnitude of Δa.
+ * The precision step is 10^(aMag−1): ±1 unit at that step is accepted.
+ * e.g. Δa=25000 → aMag=4, step=1000, tol=1000
+ *      Δa=6.0   → aMag=0, step=0.1,  tol=0.1
+ */
+function checkMean(student, correct, aMag) {
+  if (isNaN(student)) return false;
+  const step = Math.pow(10, aMag - 1);   // precision of last SF of Δa
+  const tol  = step + 1e-9;              // ±1 unit at that precision
+  return Math.abs(student - correct) <= tol;
+}
+
+function markFinalInputs(meanOK, uncOK) {
+  const mEl = document.getElementById('ans-mean');
+  const uEl = document.getElementById('ans-unc');
+  mEl.style.borderColor = meanOK ? 'var(--green)' : 'var(--red)';
+  uEl.style.borderColor = uncOK  ? 'var(--green)' : 'var(--red)';
+}
+
+function showCorrectAnswer(wasCorrect) {
+  const q = STATE.question;
+  const display = document.getElementById('correct-answer-display');
+  const prefix = wasCorrect ? '✅ Correct! ' : '❌ Correct answer: ';
+  // Δa displayed to exactly 2 SF (fmtSF preserves trailing zeros like 6.0, 25000)
+  const daStr = fmtSF(q.correctDA, 2);
+  // Mean displayed to the precision determined by Δa (dpA already accounts for aMag)
+  display.innerHTML =
+    `${prefix} <b>a = ${fmt(q.correctA, q.dpA)} ± ${daStr}</b>`;
+  document.getElementById('fb-label').textContent = wasCorrect ? 'Well done!' : 'Answer';
+}
+
+function endQuestion() {
+  STATE.questionDone = true;
+  STATE.nextOnEnter = true;
+  document.getElementById('btn-next').style.display = '';
+  // Reveal correct intermediate values so student can learn from them
+  const q = STATE.question;
+  ['b','c','d','e'].forEach(v => {
+    const varData = q.vars[v];
+    const types = [
+      { key:'mean', val: varData.mean.toFixed(varData.dp) },
+      { key:'unc',  val: fmtSF(varData.unc, 2) },
+      { key:'pct',  val: fmtSF(varData.pct, 2) },
+    ];
+    types.forEach(({ key, val }) => {
+      const inp = document.getElementById(`int-${key}-${v}`);
+      if (inp && inp.value.trim() === '') {
+        inp.value = val;
+        inp.style.borderColor = 'var(--muted)';
+        inp.style.opacity = '0.6'; // slightly faded to show it's filled in
+      }
+    });
+  });
+}
+
+function nextQuestion() {
+  loadQuestion();
+  document.getElementById('ans-mean').focus();
+}
+
+/* =====================================================================
+   ATTEMPTS DOTS (visual indicator)
+   ===================================================================== */
+function resetDots() {
+  for (let i = 0; i < 3; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    d.className = 'attempt-dot';
+  }
+}
+
+function updateDots(wasCorrect) {
+  // Mark all previous attempts as "used" (red), current attempt appropriately
+  for (let i = 0; i < STATE.attemptsUsed; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if (i === STATE.attemptsUsed - 1) {
+      // Most recent attempt
+      d.className = 'attempt-dot ' + (wasCorrect ? 'correct' : 'used');
+    } else {
+      d.className = 'attempt-dot used';
+    }
+  }
+}
+
+/* =====================================================================
+   CHEAT BUTTON
+   Fills in the correct intermediate values for b, c, d, e.
+   Uses the RECALCULATED values from the generated data.
+   ===================================================================== */
+function runCheat() {
+  const q = STATE.question;
+  const vars = ['b','c','d','e'];
+  vars.forEach(v => {
+    const varData = q.vars[v];
+    // Fill mean
+    const mInp = document.getElementById(`int-mean-${v}`);
+    if (mInp) {
+      mInp.value = varData.mean.toFixed(varData.dp);
+      checkIntermediateInput(mInp, v, 'mean');
+    }
+    // Fill absolute uncertainty
+    const dInp = document.getElementById(`int-unc-${v}`);
+    if (dInp) {
+      dInp.value = fmtSF(varData.unc, 2);
+      checkIntermediateInput(dInp, v, 'unc');
+    }
+    // Fill percentage uncertainty
+    const pInp = document.getElementById(`int-pct-${v}`);
+    if (pInp) {
+      pInp.value = fmtSF(varData.pct, 2);
+      checkIntermediateInput(pInp, v, 'pct');
+    }
+  });
+}
+
+/* =====================================================================
+   END GAME & RESULTS
+   ===================================================================== */
+function endGame() {
+  clearInterval(STATE.timerInterval);
+
+  document.getElementById('final-score').textContent = STATE.score;
+  document.getElementById('score-detail').textContent =
+    `correct out of ${STATE.questionNum} question${STATE.questionNum!==1?'s':''} attempted`;
+
+  const pct = STATE.questionNum > 0 ? STATE.score / STATE.questionNum : 0;
+  let msg, stars;
+  if (pct >= 0.9)       { msg = 'Outstanding! You\'re an uncertainty expert! 🎓'; stars = '⭐⭐⭐⭐⭐'; }
+  else if (pct >= 0.75) { msg = 'Great work! Almost mastered it! 🔥';               stars = '⭐⭐⭐⭐'; }
+  else if (pct >= 0.5)  { msg = 'Good effort! Keep practising! 💪';                 stars = '⭐⭐⭐'; }
+  else if (pct >= 0.25) { msg = 'Getting there — review the rules and try again! 📚'; stars = '⭐⭐'; }
+  else                  { msg = 'Don\'t give up! Read the hints carefully! 🧠';      stars = '⭐'; }
+
+  document.getElementById('grade-msg').textContent = msg;
+  document.getElementById('grade-stars').textContent = stars;
+
+  showScreen('screen-results');
+}
+
+/* =====================================================================
+   KEYBOARD: global Enter handler for "Next" button when visible
+   ===================================================================== */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && STATE.nextOnEnter &&
+      document.activeElement !== document.getElementById('ans-mean') &&
+      document.activeElement !== document.getElementById('ans-unc')) {
+    nextQuestion();
+  }
+});
+
+/* =====================================================================
+   INIT — nothing auto-starts; intro screen shown by default via CSS.
+   ===================================================================== */
+// Ensure timer display is correct on load
+document.getElementById('timer-display').textContent = '15:00';
+</script>
+</body>
+</html>
